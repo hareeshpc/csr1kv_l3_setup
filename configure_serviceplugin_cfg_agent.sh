@@ -2,6 +2,10 @@
 #export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
 
+# Change Log
+# 28th May: Changes made for using networking-cisco as base repo instead of 
+#           neutron
+
 DEST=/opt/stack
 TOP_DIR=~/devstack
 echo "Devstack dir is:"$TOP_DIR
@@ -17,7 +21,7 @@ source ~/devstack/functions
 source ~/devstack/functions-common
 source ~/devstack/lib/tls
 source ~/devstack/lib/nova
-source ~/devstack/lib/neutron
+source ~/devstack/lib/neutron-legacy
 
 function start_n_cpu(){
 	echo "[Debug]NOVA_BIN_DIR:${NOVA_BIN_DIR}"
@@ -101,7 +105,7 @@ function remote_neutron_router(){
 
 function edit_config_files(){
 	echo "Changing Neutron service plugin settings"
-	sed -i "s/^service_plugins = neutron.services.l3_router.l3_router_plugin.L3RouterPlugin,neutron_fwaas.services.firewall.fwaas_plugin.FirewallPlugin/service_plugins = neutron.plugins.cisco.service_plugins.cisco_router_plugin.CiscoRouterPlugin/" /etc/neutron/neutron.conf
+	sed -i "s/^service_plugins = neutron.services.l3_router.l3_router_plugin.L3RouterPlugin/service_plugins = neutron.plugins.cisco.service_plugins.cisco_router_plugin.CiscoRouterPlugin/" /etc/neutron/neutron.conf
 	grep service_plugins /etc/neutron/neutron.conf -m 1
 	
 	echo "Changing Nova vif settings"
@@ -146,8 +150,8 @@ pause
 echo "Stage 1: Stop relevant screen process"
 stop_screen_process
 pause
-echo "Stage 2: Set neutron branch"
-set_and_update_neutron_branch harp/csr_hotplug
+echo "Stage 2: Set neutron branch....skipping we are using networking-cisco" 
+#set_and_update_neutron_branch harp/csr_hotplug
 pause
 echo "Stage 3: Editing config files"
 edit_config_files
