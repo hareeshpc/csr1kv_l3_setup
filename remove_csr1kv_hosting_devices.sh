@@ -5,6 +5,8 @@
 # release >=Havana and release <=Grizzly, respectively.
 osn=${1:-neutron}
 
+DEVSTACK_DIR=/home/stack/devstack
+
 function delete_service_resources_by_name() {
     service=$1
     resource=$2
@@ -35,7 +37,7 @@ function delete_service_resources_by_name() {
     fi
 }
 
-source ~/devstack/openrc $osn L3AdminTenant
+source ${DEVSTACK_DIR}/openrc $osn L3AdminTenant
 
 delete_service_resources_by_name nova server CSR1kv_nrouter
 

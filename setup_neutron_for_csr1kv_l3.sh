@@ -6,9 +6,12 @@
 # it should be either 'neutron' or 'quantum', for
 # release >=Havana and release <=Grizzly, respectively.
 osn=${1:-neutron}
-plugin=${2:-n1kv}
-#plugin=ovs
+plugin=${2:-ovs}
 localrc=$3
+net_cisco=${4:-networking-cisco}
+
+DEST=/opt/stack
+DEVSTACK_DIR=/home/stack/devstack
 
 if [[ ! -z $localrc && -f $localrc ]]; then
     eval $(grep ^Q_CISCO_PLUGIN_VSM_IP= $localrc)
@@ -28,11 +31,11 @@ vsmIP=${Q_CISCO_PLUGIN_VSM_IP:-192.168.168.2}
 vsmUsername=${Q_CISCO_PLUGIN_VSM_USERNAME:-admin}
 vsmPassword=${Q_CISCO_PLUGIN_VSM_PASSWORD:-Sfish123}
 
-base_dir=/opt/stack/data/$osn/cisco
+base_dir=${DEST}/data/$osn/cisco
 templates_dir=$base_dir/templates
 template_name=csr1kv_cfg_template
 template_file=$templates_dir/$template_name
-template_file_src=/opt/stack/$osn/$osn/plugins/cisco/l3/configdrive_templates/$template_name
+template_file_src=${DEST}/$net_cisco/networking_cisco/plugins/cisco/l3/configdrive_templates/$template_name
 
 osnMgmtNwName=osn_mgmt_nw
 mgmtSecGrp=mgmt_sec_grp
@@ -165,7 +168,7 @@ if [ "$tenantId" == "No" ]; then
 fi
 
 
-source ~/devstack/openrc $adminUser $L3adminTenant
+source ${DEVSTACK_DIR}/openrc $adminUser $L3adminTenant
 
 
 echo -n "Checking if $templates_dir exists..."
@@ -187,7 +190,7 @@ fi
 
 
 #Hareesh - Copying of template file everytime to cater for template file changes
-echo -n "Copying base template in $template_file_src to $template_file ..."
+echo "Copying base template in $template_file_src to $template_file ..."
     cp $template_file_src $template_file
 
 if [ "$plugin" == "n1kv" ]; then

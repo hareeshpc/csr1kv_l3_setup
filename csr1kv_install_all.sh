@@ -6,12 +6,13 @@
 # it should be either 'neutron' or 'quantum', for
 # release >=Havana and release <=Grizzly, respectively.
 osn=${1:-neutron}
-#plugin=${2:-ovs}
-plugin=${2:-n1kv}
+plugin=${2:-ovs}
 localrc=$3
 mysql_user=$4
 mysql_password=$5
 mgmt_ip=$6
+
+DEVSTACK_DIR=/home/stack/devstack
 
 # Adopted from Devstack scripts:
 # Normalize config values to True or False
@@ -41,11 +42,11 @@ if [[ ! -z $localrc && -f $localrc ]]; then
 fi
 CREATE_TEST_NETWORKS=$(trueorfalse "False" $Q_CISCO_CREATE_TEST_NETWORKS)
 
-source ~/devstack/openrc admin demo
+source ${DEVSTACK_DIR}/openrc admin demo
 echo "***************** Setting up Keystone for CSR1kv *****************"
 ./setup_keystone_for_csr1kv_l3.sh $osn
 pause
-source ~/devstack/openrc $osn L3AdminTenant
+source ${DEVSTACK_DIR}/openrc $osn L3AdminTenant
 echo "***************** Setting up Nova & Glance for CSR1kv *****************"
 ./setup_nova_and_glance_for_csr1kv_l3.sh $osn $plugin $localrc $mysql_user $mysql_password
 pause
@@ -55,9 +56,8 @@ pause
 echo "***************** Setting up CfgAgent connectivity *****************"
 ./setup_l3cfgagent_networking.sh $osn $plugin $localrc $mgmt_ip
 
-pause
 if [[ "$CREATE_TEST_NETWORKS" == "True" ]]; then
-    source ~/devstack/openrc admin demo
+    source ${DEVSTACK_DIR}/openrc admin demo
     echo "***************** Setting up test networks *****************"
    ./setup_test_networks.sh $osn $plugin
    ./setup_interface_on_extnet1_for_demo.sh $osn $plugin

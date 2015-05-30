@@ -13,6 +13,11 @@ if [[ ! -z $localrc && -f $localrc ]]; then
     eval $(grep ^OVS_PHYSICAL_BRIDGE= $localrc)
 fi
 
+if ! `sudo ovs-vsctl br-exists $OVS_PHYSICAL_BRIDGE`; then
+    echo "EEROR! Cannot find bridge $OVS_PHYSICAL_BRIDGE. Please create it and then rerun this script"
+    exit 1
+fi
+
 adminUser=$osn
 l3AdminTenant=L3AdminTenant
 
@@ -24,14 +29,14 @@ n1kvPortPolicyProfileNames=(osn_mgmt_pp osn_t1_pp osn_t2_pp)
 vethHostSideName=l3cfgagent_hs
 vethBridgeSideName=l3cfgagent_bs
 
-
+echo -n "Checking if $l3AdminTenant exists ..."
 tenantId=`keystone tenant-get $l3AdminTenant 2>&1 | awk '/No tenant|id/ { if ($1 == "No") print "No"; else if ($2 == "id") print $4; }'`
 if [ "$tenantId" == "No" ]; then
-    echo "No $l3AdminTenant exists, please create one using the setup_keystone... script then re-run this script."
+    echo " No it does not, please create one using the setup_keystone... script then re-run this script."
     echo "Aborting!"
     exit 1
 else
-	echo "$l3AdminTenant exists"
+	echo " Yes, it does."
 fi
 
 

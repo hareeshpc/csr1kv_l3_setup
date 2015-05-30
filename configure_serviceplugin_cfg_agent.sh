@@ -3,11 +3,12 @@
 #set -x
 
 # Change Log
-# 28th May: Changes made for using networking-cisco as base repo instead of 
+# 28th May: Changes made for using networking-cisco as base repo instead of
 #           neutron
 
+NET_CISCO_REPO=networking-cisco
 DEST=/opt/stack
-TOP_DIR=~/devstack
+TOP_DIR=/home/stack/devstack
 echo "Devstack dir is:"$TOP_DIR
 
 
@@ -15,13 +16,13 @@ function pause(){
    read -p "Press [Enter] to continue ......"
 }
 
-source ~/devstack/localrc
-source ~/devstack/stackrc
-source ~/devstack/functions
-source ~/devstack/functions-common
-source ~/devstack/lib/tls
-source ~/devstack/lib/nova
-source ~/devstack/lib/neutron-legacy
+source ${TOP_DIR}/functions-common
+source ${TOP_DIR}/localrc
+source ${TOP_DIR}/stackrc
+source ${TOP_DIR}/functions
+source ${TOP_DIR}/lib/tls
+source ${TOP_DIR}/lib/nova
+source ${TOP_DIR}/lib/neutron-legacy
 
 function start_n_cpu(){
 	echo "[Debug]NOVA_BIN_DIR:${NOVA_BIN_DIR}"
@@ -36,9 +37,9 @@ function start_n_cpu(){
 function start_q_svc(){
 	echo "[Debug]NEUTRON_BIN_DIR:${NEUTRON_BIN_DIR}"
 	if [[ "$Q_PLUGIN" = 'ml2' ]]; then
-		local cfg_file_options="--config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini --config-file /opt/stack/neutron/etc/neutron/plugins/cisco/cisco_router_plugin.ini"
+		local cfg_file_options="--config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini --config-file ${DEST}/${NET_CISCO_REPO}/etc/neutron/plugins/cisco/cisco_router_plugin.ini"
 	else
-		echo "Q_PLUGIN is not ML2. You should run this script only with ML2 plugin" 	
+		echo "Q_PLUGIN is not ML2. You should run this script only with ML2 plugin"
 		exit
 	fi
 	echo "[Debug]cfg_file_options:${cfg_file_options}"
@@ -48,7 +49,7 @@ function start_q_svc(){
 }
 
 function start_q_cfg(){
-	local cfg_options='--config-file /etc/neutron/neutron.conf --config-file /opt/stack/neutron/etc/neutron/plugins/cisco/cisco_cfg_agent.ini'
+	local cfg_options="--config-file /etc/neutron/neutron.conf --config-file ${DEST}/${NET_CISCO_REPO}/etc/neutron/plugins/cisco/cisco_cfg_agent.ini"
 	echo "[Debug]Command: #run_process q-cfg-agent python $NEUTRON_BIN_DIR/neutron-cisco-cfg-agent ${cfg_options}"
 	screen_process q-cfg-agent "python $NEUTRON_BIN_DIR/neutron-cisco-cfg-agent ${cfg_options}"
 }
@@ -96,7 +97,7 @@ function set_and_update_neutron_branch(){
 	fi
 	cd -
 }
-	
+
 function remote_neutron_router(){
 	source $TOP_DIR/openrc demo demo
 	neutron router-interface-delete router1 private-subnet
@@ -104,13 +105,20 @@ function remote_neutron_router(){
 }
 
 function edit_config_files(){
-	echo "Changing Neutron service plugin settings"
-	sed -i "s/^service_plugins = neutron.services.l3_router.l3_router_plugin.L3RouterPlugin/service_plugins = neutron.plugins.cisco.service_plugins.cisco_router_plugin.CiscoRouterPlugin/" /etc/neutron/neutron.conf
-	grep service_plugins /etc/neutron/neutron.conf -m 1
-	
+	echo "Changing Neutron service plugin settings........"
+	if is_service_enabled q-fwaas; then
+		echo "Firewall plugin is enabled"
+		ed -i "s/^service_plugins = neutron.services.l3_router.l3_router_plugin.L3RouterPlugin,neutron_fwaas.services.firewall.fwaas_plugin.FirewallPlugin/service_plugins = neutron.plugins.cisco.service_plugins.cisco_router_plugin.CiscoRouterPlugin/" /etc/neutron/neutron.conf
+	else
+		echo "Only router plugin is enabled"
+		sed -i "s/^service_plugins = neutron.services.l3_router.l3_router_plugin.L3RouterPlugin/service_plugins = neutron.plugins.cisco.service_plugins.cisco_router_plugin.CiscoRouterPlugin/" /etc/neutron/neutron.conf
+	fi
+		echo "[Post Config] Configured service plugins are:"
+		grep service_plugins /etc/neutron/neutron.conf -m 1
 	echo "Changing Nova vif settings"
 	sed -i "s/^vif_plugging_is_fatal = True/vif_plugging_is_fatal = False/" /etc/nova/nova.conf
 	sed -i "s/^vif_plugging_timeout = 300/vif_plugging_timeout = 3/" /etc/nova/nova.conf
+	echo "[Post Config] VIF plugging configs in Nova.conf:"
 	grep vif_plugging /etc/nova/nova.conf
 }
 
@@ -129,7 +137,7 @@ function stop_screen_process(){
         		screen_stop_service "${screen_names[$i]}"
 			else
 				echo "No!"
-			fi	
+			fi
 		else
 			echo "No!"
 		fi
@@ -150,15 +158,14 @@ pause
 echo "Stage 1: Stop relevant screen process"
 stop_screen_process
 pause
-echo "Stage 2: Set neutron branch....skipping we are using networking-cisco" 
-#set_and_update_neutron_branch harp/csr_hotplug
-pause
-echo "Stage 3: Editing config files"
+echo "Stage 2: Editing config files"
 edit_config_files
 pause
-echo "Stage 4: Start relevant screen process"
+echo "Stage 3: Start relevant screen process"
 start_screen_process
 
+echo " "
+echo "-------Almost done---------"
 echo "Complete the installation process by running the following:"
 echo "./csr1kv_install_all.sh neutron ovs /home/stack/devstack/localrc root lab 10.0.100.2"
 

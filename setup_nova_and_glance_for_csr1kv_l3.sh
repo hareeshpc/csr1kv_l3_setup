@@ -12,6 +12,8 @@ localrc=$3
 mysql_user=$4
 mysql_password=$5
 
+DEVSTACK_DIR=/home/stack/devstack
+
 if [[ -n $mysql_user && -n $mysql_password ]]; then
    mysql_auth="-u $mysql_user -p$mysql_password"
 fi
@@ -78,7 +80,7 @@ if [ "$tenantId" == "No" ]; then
 fi
 
 
-source ~/devstack/openrc $adminUser $L3AdminTenant
+source ${DEVSTACK_DIR}/openrc $adminUser $L3AdminTenant
 
 
 echo -n "Checking if flavor '$csr1kvFlavorName' exists ..."
