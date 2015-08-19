@@ -98,9 +98,10 @@ function set_and_update_neutron_branch(){
 	cd -
 }
 
-function remote_neutron_router(){
+function remove_neutron_router(){
 	source $TOP_DIR/openrc demo demo
 	neutron router-interface-delete router1 private-subnet
+        neutron router-interface-delete router1 ipv6-private-subnet
 	neutron router-delete router1
 }
 
@@ -153,7 +154,7 @@ function start_screen_process(){
 ########## Main process ###########
 
 echo "Removing namespace router elements"
-remote_neutron_router
+remove_neutron_router
 pause
 echo "Stage 1: Stop relevant screen process"
 stop_screen_process
