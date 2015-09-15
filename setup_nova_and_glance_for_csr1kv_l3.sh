@@ -165,7 +165,7 @@ hasImage=`glance image-show $csr1kvImageName 2>&1 | awk '
 
 if [ "$hasImage" == "No" ]; then
    echo " No, it does not. Creating it."
-   glance image-create --name $csr1kvImageName --owner $tenantId --disk-format $csr1kvDiskFormat --container-format $csr1kvContainerFormat --file $csr1kvImageSrc $csr1kvGlanceExtraParams
+   glance image-create --name $csr1kvImageName --disk-format $csr1kvDiskFormat --container-format $csr1kvContainerFormat --file $csr1kvImageSrc $csr1kvGlanceExtraParams
 elif [ "$hasImage" == "NO SERVER" ]; then
    echo " Glance does not seem to be running. Skipping!"
 else
