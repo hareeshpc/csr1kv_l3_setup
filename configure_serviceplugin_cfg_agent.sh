@@ -80,7 +80,7 @@ function set_and_update_neutron_branch(){
 	cd $DEST/neutron
 	local branch_name=$(get_git_current_branch)
 	#echo "[Debug]Current branch is ${branch_name}"
-	if [[ "$branch_name" = "master" ]]; then 
+	if [[ "$branch_name" = "master" ]]; then
 		if is_remote_set; then
 			git fetch cisco ${target_br_name}
 			if is_local_branch_present ${target_br_name}; then
@@ -90,10 +90,10 @@ function set_and_update_neutron_branch(){
 			echo "[Debug] Checking out updated branch:${target_br_name}"
 			git checkout ${target_br_name}
 		else
-			echo "Remote cisco is not set!" 
+			echo "Remote cisco is not set!"
 		fi
 	else
-		echo "You didn't reclone. Update the hotplug branch manually before proceeding"		
+		echo "You didn't reclone. Update the hotplug branch manually before proceeding"
 	fi
 	cd -
 }
@@ -112,7 +112,7 @@ function edit_config_files(){
 		ed -i "s/^service_plugins = neutron.services.l3_router.l3_router_plugin.L3RouterPlugin,neutron_fwaas.services.firewall.fwaas_plugin.FirewallPlugin/service_plugins = neutron.plugins.cisco.service_plugins.cisco_router_plugin.CiscoRouterPlugin/" /etc/neutron/neutron.conf
 	else
 		echo "Only router plugin is enabled"
-		sed -i "s/^service_plugins = neutron.services.l3_router.l3_router_plugin.L3RouterPlugin/service_plugins = neutron.plugins.cisco.service_plugins.cisco_router_plugin.CiscoRouterPlugin/" /etc/neutron/neutron.conf
+		sed -i "s/^service_plugins = neutron.services.l3_router.l3_router_plugin.L3RouterPlugin/service_plugins = networking_cisco.plugins.cisco.service_plugins.cisco_router_plugin.CiscoRouterPlugin/" /etc/neutron/neutron.conf
 	fi
 		echo "[Post Config] Configured service plugins are:"
 		grep service_plugins /etc/neutron/neutron.conf -m 1
@@ -169,4 +169,3 @@ echo " "
 echo "-------Almost done---------"
 echo "Complete the installation process by running the following:"
 echo "./csr1kv_install_all.sh neutron ovs /home/stack/devstack/localrc root lab 10.0.100.2"
-
